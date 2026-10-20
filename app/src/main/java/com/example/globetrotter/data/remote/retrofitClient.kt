@@ -16,19 +16,19 @@ object RetrofitClient {
         })
         .build()
 
-    val retrofitCountry: Retrofit = Retrofit.Builder()
+    private val retrofitCountry: Retrofit = Retrofit.Builder()
         .baseUrl(COUNTRY_BASE_URL)
         .client(clienteHttp)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val retrofitHoliday: Retrofit = Retrofit.Builder()
+    private val retrofitHoliday: Retrofit = Retrofit.Builder()
         .baseUrl(HOLIDAY_BASE_URL)
         .client(clienteHttp)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val retrofitSport: Retrofit = Retrofit.Builder()
+    private val retrofitSport: Retrofit = Retrofit.Builder()
         .baseUrl(SPORT_BASE_URL)
         .client(clienteHttp)
         .addConverterFactory(GsonConverterFactory.create())
@@ -42,7 +42,7 @@ object RetrofitClient {
         retrofitHoliday.create(HolidayApiService::class.java)
     }
 
-    val apiServiceSport: SportApiService by lazy {
-        retrofitSport.create(SportApiService::class.java)
+    val apiServiceSport: TeamApiService by lazy {
+        retrofitSport.create(TeamApiService::class.java)
     }
 }
