@@ -8,6 +8,8 @@ fun DataDto.aCatFact(): CatFact {
     return CatFact(fact = dto?.fact, length = dto?.length)
 }
 
+/*TODO pa q funcione el commit*/
+
 fun WeatherResponseDto.aWeatherData(): WeatherData {
     val temp = current?.temperature?.let { "$it ${currentUnits?.temperatureUnit ?: "°C"}" } ?: "N/A"
     val hum = current?.humidity?.let { "$it${currentUnits?.humidityUnit ?: "%"}" } ?: "N/A"
