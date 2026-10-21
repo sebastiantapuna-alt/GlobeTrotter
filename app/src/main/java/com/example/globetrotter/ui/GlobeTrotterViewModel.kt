@@ -1,34 +1,55 @@
 package com.example.globetrotter.ui
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.globetrotter.data.local.GlobeTrotterDatabase
 import com.example.globetrotter.data.model.GlobeTrotterInfo
 import com.example.globetrotter.data.repository.CountryRepository
+import com.example.globetrotter.data.repository.FavoritosRepository
 import com.example.globetrotter.data.repository.HolidayRepository
 import com.example.globetrotter.data.repository.TeamRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class GlobeTrotterViewModel(
+    application: Application,
     private val countryRepo: CountryRepository = CountryRepository(),
     private val holidayRepo: HolidayRepository = HolidayRepository(),
     private val teamRepo: TeamRepository = TeamRepository(),
-) : ViewModel() {
+    private val favoritosRepo: FavoritosRepository =
+        FavoritosRepository(GlobeTrotterDatabase.obtenerInstancia(application).trotterDao())
+) : AndroidViewModel(application) {
 
-    private val _uiState = MutableStateFlow<GlobeTrotterUiState>(GlobeTrotterUiState.Idle)
-    val uiState: StateFlow<GlobeTrotterUiState> = _uiState.asStateFlow()
+    private val _searchState = MutableStateFlow<SearchState>(SearchState.Idle)
+
+    val uiState: StateFlow<GlobeTrotterUiState> = combine(
+        _searchState,
+        favoritosRepo.mirarFavoritos()
+    ) { searchState, favoritos ->
+        GlobeTrotterUiState(
+            searchState = searchState,
+            favoritos = favoritos
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = GlobeTrotterUiState()
+    )
 
     fun searchCountry(query: String) {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) {
-            _uiState.value = GlobeTrotterUiState.Error("Ingresa el nombre de un país")
+            _searchState.value = SearchState.Error("Ingresa el nombre de un país")
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = GlobeTrotterUiState.Loading
+            _searchState.value = SearchState.Loading
 
             val countryResult = countryRepo.search(trimmed)
             countryResult.fold(
@@ -50,14 +71,26 @@ class GlobeTrotterViewModel(
                         randomHoliday = holidayText,
                         randomTeam = teamText,
                     )
-                    _uiState.value = GlobeTrotterUiState.Success(info)
+                    _searchState.value = SearchState.Success(info)
                 },
                 onFailure = { error ->
-                    _uiState.value = GlobeTrotterUiState.Error(
+                    _searchState.value = SearchState.Error(
                         error.localizedMessage ?: "Ocurrió un error inesperado al consultar la información.",
                     )
                 },
             )
+        }
+    }
+
+    fun agregarAFavoritos(info: GlobeTrotterInfo) {
+        viewModelScope.launch {
+            favoritosRepo.agregarFavorito(info)
+        }
+    }
+
+    fun eliminarDeFavoritos(trotterId: Int) {
+        viewModelScope.launch {
+            favoritosRepo.eliminarFavorito(trotterId)
         }
     }
 }

@@ -2,9 +2,14 @@ package com.example.globetrotter.ui
 
 import com.example.globetrotter.data.model.GlobeTrotterInfo
 
-sealed interface GlobeTrotterUiState {
-    object Idle : GlobeTrotterUiState
-    object Loading : GlobeTrotterUiState
-    data class Success(val info: GlobeTrotterInfo) : GlobeTrotterUiState
-    data class Error(val message: String) : GlobeTrotterUiState
+data class GlobeTrotterUiState(
+    val searchState: SearchState = SearchState.Idle,
+    val favoritos: List<GlobeTrotterInfo> = emptyList()
+)
+
+sealed interface SearchState {
+    object Idle : SearchState
+    object Loading : SearchState
+    data class Success(val info: GlobeTrotterInfo) : SearchState
+    data class Error(val message: String) : SearchState
 }
