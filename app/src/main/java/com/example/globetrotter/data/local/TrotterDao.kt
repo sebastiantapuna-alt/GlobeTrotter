@@ -14,7 +14,6 @@ interface TrotterDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun agregarFavorito(trotterEntity: TrotterEntity)
 
-    @Query("DELETE FROM favoritos WHERE id = :trotterId")
-    suspend fun eliminarFavorito(trotterId: Int)
-
+    @Query("DELETE FROM favoritos WHERE fact = :fact")
+    suspend fun eliminarFavorito(fact: String)
 }

@@ -4,11 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.globetrotter.data.local.GlobeTrotterDatabase
-import com.example.globetrotter.data.model.GlobeTrotterInfo
-import com.example.globetrotter.data.repository.CountryRepository
+import com.example.globetrotter.data.model.CatFact
+import com.example.globetrotter.data.repository.CatFactRepository
 import com.example.globetrotter.data.repository.FavoritosRepository
-import com.example.globetrotter.data.repository.HolidayRepository
-import com.example.globetrotter.data.repository.TeamRepository
+import com.example.globetrotter.data.repository.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,23 +15,25 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class GlobeTrotterViewModel(
+class GlobeTrotterViewModel @JvmOverloads constructor(
     application: Application,
-    private val countryRepo: CountryRepository = CountryRepository(),
-    private val holidayRepo: HolidayRepository = HolidayRepository(),
-    private val teamRepo: TeamRepository = TeamRepository(),
+    private val weatherRepo: WeatherRepository = WeatherRepository(),
+    private val catFactRepo: CatFactRepository = CatFactRepository(),
     private val favoritosRepo: FavoritosRepository =
         FavoritosRepository(GlobeTrotterDatabase.obtenerInstancia(application).trotterDao())
 ) : AndroidViewModel(application) {
 
-    private val _searchState = MutableStateFlow<SearchState>(SearchState.Idle)
+    private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Idle)
+    private val _catFactsState = MutableStateFlow<CatFactsUiState>(CatFactsUiState.Idle)
 
     val uiState: StateFlow<GlobeTrotterUiState> = combine(
-        _searchState,
+        _weatherState,
+        _catFactsState,
         favoritosRepo.mirarFavoritos()
-    ) { searchState, favoritos ->
+    ) { weather, catFacts, favoritos ->
         GlobeTrotterUiState(
-            searchState = searchState,
+            weatherState = weather,
+            catFactsState = catFacts,
             favoritos = favoritos
         )
     }.stateIn(
@@ -41,56 +42,52 @@ class GlobeTrotterViewModel(
         initialValue = GlobeTrotterUiState()
     )
 
-    fun searchCountry(query: String) {
-        val trimmed = query.trim()
-        if (trimmed.isEmpty()) {
-            _searchState.value = SearchState.Error("Ingresa el nombre de un país")
-            return
-        }
+    init {
+        fetchWeatherLaPaz()
+        fetchCatFacts()
+    }
 
+    fun fetchWeatherLaPaz() {
         viewModelScope.launch {
-            _searchState.value = SearchState.Loading
-
-            val countryResult = countryRepo.search(trimmed)
-            countryResult.fold(
-                onSuccess = { country ->
-                    val holidayText = if (country.alpha2.isNotBlank()) {
-                        holidayRepo.getRandomHoliday(country.alpha2).getOrNull()?.name
-                            ?: "No hay feriados para el código ${country.alpha2}"
-                    } else {
-                        "Sin código de país para consultar feriados"
-                    }
-
-                    val teamText = teamRepo.getRandomTeam(trimmed).getOrNull()?.name
-                        ?: "No se encontraron equipos para ${country.name}"
-
-                    val info = GlobeTrotterInfo(
-                        countryName = country.name,
-                        capital = country.capital.ifBlank { "Sin Capital" },
-                        alpha2Code = country.alpha2,
-                        randomHoliday = holidayText,
-                        randomTeam = teamText,
-                    )
-                    _searchState.value = SearchState.Success(info)
+            _weatherState.value = WeatherUiState.Loading
+            weatherRepo.getWeather().fold(
+                onSuccess = { weather ->
+                    _weatherState.value = WeatherUiState.Success(weather)
                 },
                 onFailure = { error ->
-                    _searchState.value = SearchState.Error(
-                        error.localizedMessage ?: "Ocurrió un error inesperado al consultar la información.",
+                    _weatherState.value = WeatherUiState.Error(
+                        error.localizedMessage ?: "Error al obtener el clima de La Paz"
                     )
-                },
+                }
             )
         }
     }
 
-    fun agregarAFavoritos(info: GlobeTrotterInfo) {
+    fun fetchCatFacts(limit: Int = 10) {
         viewModelScope.launch {
-            favoritosRepo.agregarFavorito(info)
+            _catFactsState.value = CatFactsUiState.Loading
+            catFactRepo.getCatFacts(limit).fold(
+                onSuccess = { facts ->
+                    _catFactsState.value = CatFactsUiState.Success(facts)
+                },
+                onFailure = { error ->
+                    _catFactsState.value = CatFactsUiState.Error(
+                        error.localizedMessage ?: "Error al obtener datos de gatos"
+                    )
+                }
+            )
         }
     }
 
-    fun eliminarDeFavoritos(trotterId: Int) {
+    fun agregarAFavoritos(fact: CatFact) {
         viewModelScope.launch {
-            favoritosRepo.eliminarFavorito(trotterId)
+            favoritosRepo.agregarFavorito(fact)
+        }
+    }
+
+    fun eliminarDeFavoritos(factContenido: String) {
+        viewModelScope.launch {
+            favoritosRepo.eliminarFavorito(factContenido)
         }
     }
 }

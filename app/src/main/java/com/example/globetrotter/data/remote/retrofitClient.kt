@@ -6,9 +6,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val COUNTRY_BASE_URL = "https://api.restcountries.com/"
-    private const val HOLIDAY_BASE_URL = "https://date.nager.at/"
-    private const val SPORT_BASE_URL = "https://www.thesportsdb.com/"
+    private const val WEATHER_BASE_URL = "https://api.open-meteo.com/"
+    private const val CAT_FACT_BASE_URL = "https://catfact.ninja/"
 
     private val clienteHttp: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().apply {
@@ -16,33 +15,23 @@ object RetrofitClient {
         })
         .build()
 
-    private val retrofitCountry: Retrofit = Retrofit.Builder()
-        .baseUrl(COUNTRY_BASE_URL)
+    private val retrofitWeather: Retrofit = Retrofit.Builder()
+        .baseUrl(WEATHER_BASE_URL)
         .client(clienteHttp)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    private val retrofitHoliday: Retrofit = Retrofit.Builder()
-        .baseUrl(HOLIDAY_BASE_URL)
+    private val retrofitCatFact: Retrofit = Retrofit.Builder()
+        .baseUrl(CAT_FACT_BASE_URL)
         .client(clienteHttp)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    private val retrofitSport: Retrofit = Retrofit.Builder()
-        .baseUrl(SPORT_BASE_URL)
-        .client(clienteHttp)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    val apiServiceCountry: CountryApiService by lazy {
-        retrofitCountry.create(CountryApiService::class.java)
+    val apiServiceWeather: WeatherApiService by lazy {
+        retrofitWeather.create(WeatherApiService::class.java)
     }
 
-    val apiServiceHoliday: HolidayApiService by lazy {
-        retrofitHoliday.create(HolidayApiService::class.java)
-    }
-
-    val apiServiceSport: TeamApiService by lazy {
-        retrofitSport.create(TeamApiService::class.java)
+    val apiServiceCatFact: CatFactApiService by lazy {
+        retrofitCatFact.create(CatFactApiService::class.java)
     }
 }

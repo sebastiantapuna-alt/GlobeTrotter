@@ -1,23 +1,15 @@
 package com.example.globetrotter.data.local
 
-import com.example.globetrotter.data.model.GlobeTrotterInfo
+import com.example.globetrotter.data.model.CatFact
 
-fun TrotterEntity.aInfo(): GlobeTrotterInfo =
-    GlobeTrotterInfo(
-        id = id,
-        countryName = countryName,
-        capital = capital,
-        alpha2Code = alpha2Code,
-        randomHoliday = randomHoliday,
-        randomTeam = randomTeam
+fun TrotterEntity.aFact(): CatFact =
+    CatFact(
+        fact = fact,
+        length = length
     )
 
-fun GlobeTrotterInfo.aEntity(): TrotterEntity =
+fun CatFact.aEntity(): TrotterEntity =
     TrotterEntity(
-        id = id,
-        countryName = countryName,
-        capital = capital,
-        alpha2Code = alpha2Code,
-        randomHoliday = randomHoliday,
-        randomTeam = randomTeam
+        fact = fact ?: "",
+        length = length ?: 0
     )

@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [TrotterEntity::class], version = 1, exportSchema = false)
+@Database(entities = [TrotterEntity::class], version = 2, exportSchema = false)
 abstract class GlobeTrotterDatabase: RoomDatabase() {
     abstract fun trotterDao(): TrotterDao
 
@@ -20,7 +20,9 @@ abstract class GlobeTrotterDatabase: RoomDatabase() {
                     context.applicationContext,
                     GlobeTrotterDatabase::class.java,
                     "globetrotter.db"
-                ).build().also { instancia = it }
+                )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build().also { instancia = it }
             }
         }
     }

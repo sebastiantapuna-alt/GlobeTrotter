@@ -1,15 +1,24 @@
 package com.example.globetrotter.ui
 
-import com.example.globetrotter.data.model.GlobeTrotterInfo
+import com.example.globetrotter.data.model.CatFact
+import com.example.globetrotter.data.model.WeatherData
 
 data class GlobeTrotterUiState(
-    val searchState: SearchState = SearchState.Idle,
-    val favoritos: List<GlobeTrotterInfo> = emptyList()
+    val weatherState: WeatherUiState = WeatherUiState.Idle,
+    val catFactsState: CatFactsUiState = CatFactsUiState.Idle,
+    val favoritos: List<CatFact> = emptyList()
 )
 
-sealed interface SearchState {
-    object Idle : SearchState
-    object Loading : SearchState
-    data class Success(val info: GlobeTrotterInfo) : SearchState
-    data class Error(val message: String) : SearchState
+sealed interface WeatherUiState {
+    object Idle : WeatherUiState
+    object Loading : WeatherUiState
+    data class Success(val weather: WeatherData) : WeatherUiState
+    data class Error(val message: String) : WeatherUiState
+}
+
+sealed interface CatFactsUiState {
+    object Idle : CatFactsUiState
+    object Loading : CatFactsUiState
+    data class Success(val facts: CatFact) : CatFactsUiState
+    data class Error(val message: String) : CatFactsUiState
 }
